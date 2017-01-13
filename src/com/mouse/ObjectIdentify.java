@@ -1,12 +1,10 @@
 package com.mouse;
 
 import com.utils.FileOperation;
+import sun.misc.JavaLangAccess;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +25,9 @@ public class ObjectIdentify extends JFrame {
     private JPanel imagePanel;
 
     private ImageIcon background;
+
+    private JLabel tempLabel;
+    private JLabel label;
 
     // 矩形的左上角和width/height
     private Integer topLeftX = null;
@@ -58,7 +59,6 @@ public class ObjectIdentify extends JFrame {
     public ObjectIdentify() {
 
     }
-
 
     public void initPane(){
         // 把内容窗格转化为JPanel，否则不能用方法setOpaque()来使内容窗格透明
@@ -94,7 +94,6 @@ public class ObjectIdentify extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 System.out.println("reverse");
                 clickCount --;
-                repaint();
 
             }
         });
@@ -112,7 +111,7 @@ public class ObjectIdentify extends JFrame {
                     int curY = e.getY();
 
                     // 点击奇/偶数次，对应不同的操作
-                    if(clickCount % 2 == 0) {
+                    if (clickCount % 2 == 0) {
                         downRightX = curX;
                         downRightY = curY;
                         // 计算该矩形的width、height
@@ -126,14 +125,14 @@ public class ObjectIdentify extends JFrame {
                         rowResult.add(width);
                         rowResult.add(height);
                         // 有撤销操作的情况下
-                        if (imgResult.size() == (clickCount/2)) {
-                            imgResult.set((clickCount/2) - 1, rowResult);
+                        if (imgResult.size() == (clickCount / 2)) {
+                            imgResult.set((clickCount / 2) - 1, rowResult);
                         } else {
                             imgResult.add(rowResult);
                         }
 
                         // show current click information
-                        System.out.println(filesArr[index] + "的第 " + clickCount/2 + " 个object, 相关信息：（x = " + topLeftX + ", y = " + topLeftY + ", width = " + width + ", height = " + height + ")");
+                        System.out.println(filesArr[index] + "的第 " + clickCount / 2 + " 个object, 相关信息：（x = " + topLeftX + ", y = " + topLeftY + ", width = " + width + ", height = " + height + ")");
                     } else {
                         topLeftX = curX;
                         topLeftY = curY;
@@ -142,6 +141,14 @@ public class ObjectIdentify extends JFrame {
                     g.setColor(Color.RED);
                     paint(g);
                 }
+//                else if (i == MouseEvent.BUTTON3) { // 右键
+//                    tempLabel = new JLabel();
+//                    operateLabel("add");
+//                    // 划线
+//                    plotLine(e.getX(), e.getY());
+//                } else if (i == MouseEvent.BUTTON2) {  // 中键
+//                    tempLabel.repaint();
+//                }
             }
         });
 
@@ -183,7 +190,7 @@ public class ObjectIdentify extends JFrame {
     public void setFinalFrame() {
         System.out.println("Current path: " + getDirStr());
         String imgPath = this.getDirStr() + filesArr[this.index];
-        JLabel label = this.setBgImage(imgPath);
+        label = this.setBgImage(imgPath);
 
         frame.getLayeredPane().setLayout(null);
         // 把背景图片添加到分层窗格的最底层作为背景
@@ -206,6 +213,30 @@ public class ObjectIdentify extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void operateLabel(String sign) {
+        if (sign.equals("add")) {
+            tempLabel.setSize(background.getIconWidth(), background.getIconHeight());
+        //    tempLabel.setSize(80, 100);
+            tempLabel.setOpaque(false); // 透明
+            imagePanel.add(tempLabel, new Integer(Integer.MAX_VALUE - 1));
+
+        } else if (sign.equals("remove")) {
+            imagePanel.remove(tempLabel);
+            imagePanel.updateUI();
+        }
+    }
+
+    public void plotLine(int x, int y) {
+        Graphics gp = tempLabel.getGraphics();
+        Graphics2D g2 = (Graphics2D)gp;
+        g2.setColor(Color.YELLOW);
+        g2.setStroke(new BasicStroke(2.0f));
+        // 横线
+        g2.drawLine(0, y, background.getIconWidth(), y);
+        // 纵线
+        g2.drawLine(x, 0, x, background.getIconHeight());
     }
 
     public String getDirStr() {
